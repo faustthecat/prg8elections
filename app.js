@@ -6,6 +6,9 @@ const colors = ["#557f6d", "#c78658", "#7883ad", "#b76c72", "#aa9b4e", "#598f9a"
 let selected = "praha8";
 let selectedYear = "2026";
 let latestRequest = 0;
+let latestCandidateRequest = 0;
+let candidateKey = "";
+let candidateLastFetch = 0;
 
 const el = (id) => document.getElementById(id);
 const number = (value) => {
@@ -68,6 +71,7 @@ function render(data) {
   el("district-name").textContent = config.name;
   el("result-mode").textContent = historical ? "KONEČNÝ STAV" : "PRŮBĚŽNÝ STAV";
   el("ranking-mode").textContent = historical ? "KONEČNÉ POŘADÍ" : "PRŮBĚŽNÉ POŘADÍ";
+  el("parties-title").textContent = historical ? "Jak si vedly kandidátky" : "Jak si vedou kandidátky";
   el("results-foot-copy").textContent = historical
     ? "Konečné počty hlasů a mandátů podle oficiálních výsledků ČSÚ za volby v roce 2022."
     : "Mandáty zobrazujeme, jakmile je ČSÚ oficiálně přidělí. Během sčítání mohou být výsledky neúplné.";
@@ -92,6 +96,59 @@ function render(data) {
 }
 function escapeHtml(value) { return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char])); }
 
+function showCandidateMessage(title, detail) {
+  el("candidate-list").innerHTML = `<div class="empty-state compact"><div class="empty-symbol">✳</div><b>${escapeHtml(title)}</b><span>${escapeHtml(detail)}</span></div>`;
+}
+
+function renderCandidates(payload) {
+  if (!payload.available || !payload.candidates?.length) {
+    showCandidateMessage(
+      "Hlasy kandidátů zatím nejsou k dispozici",
+      "ČSÚ doplní individuální počty do registru po zpracování výsledků. Přehled se obnoví automaticky."
+    );
+    return;
+  }
+  el("candidate-list").innerHTML = payload.candidates.map((candidate, index) => {
+    const status = candidate.elected === true ? "ZVOLEN" : candidate.elected === false ? "NEZVOLEN" : "PRŮBĚŽNĚ";
+    const statusClass = candidate.elected === true ? "elected" : candidate.elected === false ? "not-elected" : "pending";
+    return `<article class="candidate-row">
+      <div class="candidate-person"><span class="rank">${index + 1}.</span><div><strong>${escapeHtml(candidate.name)}</strong><span class="candidate-party-mobile">${escapeHtml(candidate.party)}</span></div></div>
+      <div class="candidate-party">${escapeHtml(candidate.party)}</div>
+      <div class="candidate-votes">${fmt(candidate.votes)}</div>
+      <div class="mandate-cell"><span class="mandate-badge ${statusClass}">${status}</span></div>
+    </article>`;
+  }).join("");
+}
+
+async function refreshCandidates(year, config, results) {
+  const key = `${year}-${config.code}`;
+  if (year === "2026" && !(results.precincts > 0)) {
+    candidateKey = `waiting-${key}`;
+    candidateLastFetch = 0;
+    showCandidateMessage(
+      "Čekáme na první výsledky okrsků",
+      "Počty hlasů jednotlivých kandidátů se doplní, jakmile je ČSÚ zveřejní v kandidátním registru."
+    );
+    return;
+  }
+  const refreshAfter = year === "2022" ? Number.POSITIVE_INFINITY : 5 * 60 * 1000;
+  if (candidateKey === key && Date.now() - candidateLastFetch < refreshAfter) return;
+  candidateKey = key;
+  candidateLastFetch = Date.now();
+  const requestId = ++latestCandidateRequest;
+  showCandidateMessage("Načítám hlasy kandidátů", "Ověřuji data v oficiálním registru ČSÚ.");
+  try {
+    const response = await fetch(`/api/candidates?assembly=${config.code}&year=${year}`);
+    const payload = await response.json();
+    if (requestId !== latestCandidateRequest || key !== `${selectedYear}-${ASSEMBLIES[selected].code}`) return;
+    if (!response.ok) throw new Error(payload.error || "Hlasy kandidátů nejsou dostupné.");
+    renderCandidates(payload);
+  } catch (error) {
+    if (requestId !== latestCandidateRequest) return;
+    showCandidateMessage("Hlasy kandidátů se nepodařilo načíst", error.message);
+  }
+}
+
 async function refresh() {
   const requestId = ++latestRequest;
   const config = ASSEMBLIES[selected];
@@ -103,6 +160,7 @@ async function refresh() {
     if (requestId !== latestRequest) return;
     const data = parseResults(body, config);
     render(data);
+    refreshCandidates(year, config, data);
     el("updated-at").textContent = `${year === "2022" ? "Načteno" : "Kontrola"} ${new Date().toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit", second: "2-digit"})}`;
     setNote(year === "2022"
       ? "Konečné výsledky komunálních voleb 2022 · ověřovací data ČSÚ"
@@ -115,6 +173,7 @@ async function refresh() {
 }
 
 function resetForLoading() {
+  latestCandidateRequest += 1;
   el("precinct-pct").textContent = "—";
   el("progress-fill").style.width = "0%";
   el("precinct-count").textContent = "Načítám…";
@@ -122,6 +181,7 @@ function resetForLoading() {
   el("turnout").textContent = "Načítám…";
   el("seats-filled").textContent = "—";
   el("party-list").innerHTML = `<div class="empty-state"><div class="empty-symbol">✳</div><b>Načítám výsledky</b><span>Ověřuji aktuální stav u ČSÚ.</span></div>`;
+  showCandidateMessage("Načítám hlasy kandidátů", "Ověřuji data v oficiálním registru ČSÚ.");
   el("updated-at").textContent = "Načítám…";
 }
 
@@ -149,6 +209,7 @@ document.querySelectorAll(".year-tab").forEach((button) => button.addEventListen
     : "https://volby.gov.cz/opendata/kv2026/kv2026_opendata.htm";
   el("result-mode").textContent = historical ? "KONEČNÝ STAV" : "PRŮBĚŽNÝ STAV";
   el("ranking-mode").textContent = historical ? "KONEČNÉ POŘADÍ" : "PRŮBĚŽNÉ POŘADÍ";
+  el("parties-title").textContent = historical ? "Jak si vedly kandidátky" : "Jak si vedou kandidátky";
   el("seats-note").textContent = historical ? "Oficiálně přidělené mandáty" : "Potvrzené výsledky ČSÚ";
   resetForLoading();
   refresh();

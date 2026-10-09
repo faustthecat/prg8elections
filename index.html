@@ -65,11 +65,16 @@
 
       <section class="results-section">
         <div class="section-heading">
-          <div><span class="section-label" id="ranking-mode">PRŮBĚŽNÉ POŘADÍ</span><h2>Jak si vedly kandidátky</h2></div>
+          <div><span class="section-label" id="ranking-mode">PRŮBĚŽNÉ POŘADÍ</span><h2 id="parties-title">Jak si vedou kandidátky</h2></div>
           <div class="sort-label">PODLE PODÍLU HLASŮ <span>↓</span></div>
         </div>
         <div class="party-head"><span>KANDIDÁTNÍ LISTINA</span><span>HLASY / PODÍL</span><span>MANDÁTY</span></div>
         <div class="party-list" id="party-list"><div class="empty-state"><div class="empty-symbol">✳</div><b>Čekáme na první sečtené okrsky</b><span>Výsledky se načítají přímo z dat ČSÚ.</span></div></div>
+        <section class="candidate-section" aria-live="polite">
+          <div class="candidate-heading"><div><span class="section-label">HLASY JEDNOTLIVÝCH KANDIDÁTŮ</span><h3>TOP 10 nejvíce křížkovaných</h3><p class="candidate-caption">Počet hlasů kandidáta dle ČSÚ. Zahrnuje i hlasy přidělené označením celé kandidátky.</p></div></div>
+          <div class="candidate-head"><span>KANDIDÁT</span><span>KANDIDÁTNÍ LISTINA</span><span>HLASY</span><span>MANDÁT</span></div>
+          <div class="candidate-list" id="candidate-list"><div class="empty-state compact"><div class="empty-symbol">✳</div><b>Načítám hlasy kandidátů</b><span>Čekám na data ČSÚ.</span></div></div>
+        </section>
         <div class="results-foot"><span class="foot-mark">i</span><p id="results-foot-copy">Mandáty zobrazujeme, jakmile je ČSÚ oficiálně přidělí. Během sčítání mohou být výsledky neúplné.</p></div>
       </section>
 
