@@ -6,7 +6,7 @@ module.exports = async (request, response) => {
   const year = String(request.query.year || "2026");
   if (!allowedAssemblies.has(assembly) || !allowedYears.has(year)) return response.status(400).send("Neznámé zastupitelstvo nebo rok voleb.");
   const url = year === "2022"
-    ? `https://www.volby.cz/pls/kv2022/vysledky_obec?cislo_obce=${assembly}`
+    ? `https://www.volby.cz/pls/kv2022/vysledky_obec?cislo_obce=${assembly}&datumvoleb=20220923`
     : `https://volby.gov.cz/appdata/kv2026/20261009/odata/zastup/vysledky_obec_${assembly}.xml`;
   try {
     // Fetch headers must be ByteString-safe; keep this value ASCII-only.

@@ -1,0 +1,5 @@
+{
+  "functions": {
+    "api/results.js": { "maxDuration": 10 }
+  }
+}

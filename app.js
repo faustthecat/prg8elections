@@ -44,7 +44,10 @@ function parseResults(xmlText, target) {
   if (doc.querySelector("parsererror")) throw new Error("ČSÚ vrátilo nečitelná data.");
   const all = [...doc.getElementsByTagName("*")];
   const root = doc.documentElement;
+  const sourceError = all.find((node) => node.tagName.toUpperCase() === "CHYBA");
+  if (sourceError) throw new Error(sourceError.textContent.trim() || "ČSÚ pro tuto volbu nevrátilo výsledky.");
   const assembly = all.find((node) => node.tagName.toUpperCase() === "OBEC" && node.getAttribute("KODZASTUP") === target.code) || root;
+  if (assembly === root && root.tagName.toUpperCase() !== "OBEC") throw new Error("V XML ČSÚ chybí výsledky pro vybrané zastupitelstvo.");
   const precincts = firstNumber(assembly, ["OKRSKY_ZPRAC", "OKRSKYZPRAC", "OKRSKY_ZPRACOVANO"]);
   const totalPrecincts = firstNumber(assembly, ["OKRSKY_CELKEM", "OKRSKYCELK", "OKRSKY_CELK"]);
   const participation = firstNumber(assembly, ["UCAST_PROC", "UCASTPROC"]);
