@@ -23,7 +23,7 @@ Každý push do hlavní větve následně vytvoří nové nasazení.
 
 ## Zdroj a výpočet výsledků
 
-Zdroje: [ČSÚ — otevřená data komunálních voleb 2026](https://volby.gov.cz/opendata/kv2026/kv2026_opendata.htm) a [ČSÚ — otevřená data komunálních voleb 2022](https://volby.gov.cz/opendata/kv2022/kv2022_opendata.htm). Aplikace čte oficiální XML jednotlivých zastupitelstev podle kódů ČSÚ: Praha 8 `500208`, Praha `554782`. Pro rok 2022 používá endpoint s parametrem data voleb `20220923`.
+Zdroje: [ČSÚ — otevřená data komunálních voleb 2026](https://volby.gov.cz/opendata/kv2026/kv2026_opendata.htm) a [ČSÚ — otevřená data komunálních voleb 2022](https://volby.gov.cz/opendata/kv2022/kv2022_opendata.htm). Aplikace čte oficiální XML jednotlivých zastupitelstev podle kódů ČSÚ: Praha 8 `500208`, Praha `554782`. Archivní XML pro rok 2022 načítá z endpointu `www.volby.cz/pls/kv2022/vysledky_obec`.
 
 Počty sečtených okrsků, platné hlasy, podíly a přidělené mandáty se zobrazují podle XML ČSÚ. Před oficiálním přidělením mandátů aplikace nevykresluje vlastní odhad. Při nedostupnosti zdroje zůstávají hodnoty prázdné a zobrazí se informace o chybě.
 
