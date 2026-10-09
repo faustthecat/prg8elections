@@ -12,6 +12,9 @@ module.exports = async (request, response) => {
     response.setHeader("Access-Control-Allow-Origin", "*");
     return response.status(200).send(await result.text());
   } catch (error) {
-    return response.status(502).send("Nepodařilo se spojit s daty ČSÚ.");
+    console.error("ČSÚ fetch failed", { url, message: error?.message, cause: error?.cause?.message });
+    response.setHeader("Cache-Control", "no-store, max-age=0");
+    const details = error?.cause?.message || error?.message || "neznámá chyba připojení";
+    return response.status(502).send(`Nepodařilo se spojit s daty ČSÚ. Technický detail: ${details}`);
   }
 };
