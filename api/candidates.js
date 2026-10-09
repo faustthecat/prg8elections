@@ -41,7 +41,7 @@ module.exports = async (request, response) => {
   response.setHeader("Content-Type", "application/json; charset=utf-8");
   if (year === "2022") {
     response.setHeader("Cache-Control", "public, s-maxage=86400, stale-while-revalidate=604800");
-    return response.status(200).json({ available: true, candidates: historical.assemblies[assembly] || [] });
+    return response.status(200).json({ available: true, lists: historical.assemblies[assembly]?.lists || [] });
   }
 
   // Candidate-level vote and mandate fields are published in the official
@@ -57,7 +57,7 @@ module.exports = async (request, response) => {
     const assemblyAttrs = resultXml.match(/<OBEC\b([^>]*)>/)?.[1] || "";
     const completeValue = assemblyAttrs.match(/\bJE_SPOCTENO="([^"]+)"/)?.[1] || "";
     const electionComplete = ["true", "1"].includes(completeValue.toLowerCase());
-    if (!electionComplete) return response.status(200).json({ available: false, candidates: [] });
+    if (!electionComplete) return response.status(200).json({ available: false, lists: [] });
 
     const [candidateResponse, partyResponse] = await Promise.all([
       fetch(`${base}/kvrk.csv`, { headers }),
@@ -89,10 +89,18 @@ module.exports = async (request, response) => {
       candidates.push({ name, party: parties.get(value(row, candidateColumns, "OSTRANA")) || "Kandidátní listina", votes, elected, ballotOrder: Number(value(row, candidateColumns, "PORCISLO")) || 0 });
     }, assembly);
 
-    if (!hasResults) return response.status(200).json({ available: false, candidates: [] });
+    if (!hasResults) return response.status(200).json({ available: false, lists: [] });
     response.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400");
-    candidates.sort((a, b) => b.votes - a.votes || a.ballotOrder - b.ballotOrder);
-    return response.status(200).json({ available: true, candidates: candidates.slice(0, 10) });
+    const grouped = new Map();
+    for (const candidate of candidates) {
+      if (!grouped.has(candidate.party)) grouped.set(candidate.party, []);
+      grouped.get(candidate.party).push(candidate);
+    }
+    const lists = [...grouped].map(([name, entries]) => ({
+      name,
+      candidates: entries.sort((a, b) => b.votes - a.votes || a.ballotOrder - b.ballotOrder).slice(0, 10),
+    })).sort((a, b) => a.name.localeCompare(b.name, "cs"));
+    return response.status(200).json({ available: true, lists });
   } catch (error) {
     console.error("ČSÚ candidate registry fetch failed", { message: error?.message, cause: error?.cause?.message });
     return response.status(502).json({ error: "Nepodařilo se načíst hlasy kandidátů z ČSÚ." });

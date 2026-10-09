@@ -9,6 +9,8 @@ let latestRequest = 0;
 let latestCandidateRequest = 0;
 let candidateKey = "";
 let candidateLastFetch = 0;
+let candidatePayload = null;
+let selectedCandidateList = "all";
 
 const el = (id) => document.getElementById(id);
 const number = (value) => {
@@ -101,27 +103,41 @@ function showCandidateMessage(title, detail) {
 }
 
 function renderCandidates(payload) {
-  if (!payload.available || !payload.candidates?.length) {
+  const lists = payload.lists || [];
+  if (!payload.available || !lists.length) {
+    el("candidate-filter").innerHTML = '<option value="all">Všechny subjekty</option>';
+    el("candidate-filter").disabled = true;
     showCandidateMessage(
       "Hlasy kandidátů zatím nejsou k dispozici",
       "ČSÚ doplní individuální počty do registru po zpracování výsledků. Přehled se obnoví automaticky."
     );
     return;
   }
-  el("candidate-list").innerHTML = payload.candidates.map((candidate, index) => {
-    const status = candidate.elected === true ? "ZVOLEN" : candidate.elected === false ? "NEZVOLEN" : "PRŮBĚŽNĚ";
-    const statusClass = candidate.elected === true ? "elected" : candidate.elected === false ? "not-elected" : "pending";
-    return `<article class="candidate-row">
-      <div class="candidate-person"><span class="rank">${index + 1}.</span><div><strong>${escapeHtml(candidate.name)}</strong><span class="candidate-party-mobile">${escapeHtml(candidate.party)}</span></div></div>
-      <div class="candidate-party">${escapeHtml(candidate.party)}</div>
-      <div class="candidate-votes">${fmt(candidate.votes)}</div>
-      <div class="mandate-cell"><span class="mandate-badge ${statusClass}">${status}</span></div>
-    </article>`;
-  }).join("");
+  const filter = el("candidate-filter");
+  const previous = selectedCandidateList;
+  filter.innerHTML = '<option value="all">Všechny subjekty</option>' + lists.map((list) => `<option value="${escapeHtml(list.name)}">${escapeHtml(list.name)}</option>`).join("");
+  filter.disabled = false;
+  selectedCandidateList = lists.some((list) => list.name === previous) ? previous : "all";
+  filter.value = selectedCandidateList;
+  const visibleLists = selectedCandidateList === "all" ? lists : lists.filter((list) => list.name === selectedCandidateList);
+  el("candidate-list").innerHTML = visibleLists.map((list) => `<section class="candidate-group">
+    ${selectedCandidateList === "all" ? `<h4 class="candidate-group-title">${escapeHtml(list.name)}<span>TOP ${list.candidates.length}</span></h4>` : ""}
+    ${list.candidates.map((candidate, index) => {
+      const status = candidate.elected === true ? "ZVOLEN" : candidate.elected === false ? "NEZVOLEN" : "PRŮBĚŽNĚ";
+      const statusClass = candidate.elected === true ? "elected" : candidate.elected === false ? "not-elected" : "pending";
+      return `<article class="candidate-row">
+        <div class="candidate-person"><span class="rank">${index + 1}.</span><div><strong>${escapeHtml(candidate.name)}</strong><span class="candidate-party-mobile">${escapeHtml(list.name)}</span></div></div>
+        <div class="candidate-party">${escapeHtml(list.name)}</div>
+        <div class="candidate-votes">${fmt(candidate.votes)}</div>
+        <div class="mandate-cell"><span class="mandate-badge ${statusClass}">${status}</span></div>
+      </article>`;
+    }).join("")}
+  </section>`).join("");
 }
 
 async function refreshCandidates(year, config, results) {
   const key = `${year}-${config.code}`;
+  if (candidateKey !== key) selectedCandidateList = "all";
   if (year === "2026" && !(results.precincts > 0)) {
     candidateKey = `waiting-${key}`;
     candidateLastFetch = 0;
@@ -142,12 +158,18 @@ async function refreshCandidates(year, config, results) {
     const payload = await response.json();
     if (requestId !== latestCandidateRequest || key !== `${selectedYear}-${ASSEMBLIES[selected].code}`) return;
     if (!response.ok) throw new Error(payload.error || "Hlasy kandidátů nejsou dostupné.");
+    candidatePayload = payload;
     renderCandidates(payload);
   } catch (error) {
     if (requestId !== latestCandidateRequest) return;
     showCandidateMessage("Hlasy kandidátů se nepodařilo načíst", error.message);
   }
 }
+
+el("candidate-filter").addEventListener("change", (event) => {
+  selectedCandidateList = event.target.value;
+  if (candidatePayload) renderCandidates(candidatePayload);
+});
 
 async function refresh() {
   const requestId = ++latestRequest;
@@ -174,6 +196,10 @@ async function refresh() {
 
 function resetForLoading() {
   latestCandidateRequest += 1;
+  candidatePayload = null;
+  selectedCandidateList = "all";
+  el("candidate-filter").value = "all";
+  el("candidate-filter").disabled = true;
   el("precinct-pct").textContent = "—";
   el("progress-fill").style.width = "0%";
   el("precinct-count").textContent = "Načítám…";

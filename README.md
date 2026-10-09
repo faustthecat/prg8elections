@@ -27,4 +27,4 @@ Zdroje: [ČSÚ — otevřená data komunálních voleb 2026](https://volby.gov.c
 
 Počty sečtených okrsků, platné hlasy, podíly a přidělené mandáty se zobrazují podle XML ČSÚ. Před oficiálním přidělením mandátů aplikace nevykresluje vlastní odhad. Při nedostupnosti zdroje zůstávají hodnoty prázdné a zobrazí se informace o chybě.
 
-TOP 10 kandidátů za rok 2022 vychází z registru KVRK/KVROS ČSÚ. Pro rok 2026 aplikace čte stejná kandidátní pole z aktuálního registru; pokud ČSÚ ještě nezveřejnilo individuální hlasy, přehled zobrazí stav čekání. Počty představují všechny hlasy připsané kandidátovi, včetně hlasů z označení celé kandidátky.
+TOP 10 kandidátů za rok 2022 vychází z registru KVRK/KVROS ČSÚ. Přehled ukazuje samostatný žebříček pro každou kandidátní listinu; rozbalovací filtr umožňuje zobrazit všechny subjekty nebo jeden vybraný. Pro rok 2026 aplikace čte stejná kandidátní pole z aktuálního registru; pokud ČSÚ ještě nezveřejnilo individuální hlasy, přehled zobrazí stav čekání. Počty představují všechny hlasy připsané kandidátovi, včetně hlasů z označení celé kandidátky.
