@@ -183,7 +183,7 @@ async function refresh() {
     const body = await response.text();
     if (!response.ok) throw new Error(body || "Zdroj výsledků není dostupný.");
     if (requestId !== latestRequest) return;
-    const data = parseResults(body, config);
+    const data = year === "2022" ? JSON.parse(body) : parseResults(body, config);
     render(data);
     refreshCandidates(year, config, data);
     el("updated-at").textContent = `${year === "2022" ? "Načteno" : "Kontrola"} ${new Date().toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit", second: "2-digit"})}`;
