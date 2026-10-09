@@ -5,7 +5,8 @@ module.exports = async (request, response) => {
   if (!allowedAssemblies.has(assembly)) return response.status(400).send("Neznámé zastupitelstvo.");
   const url = `https://volby.gov.cz/appdata/kv2026/20261009/odata/zastup/vysledky_obec_${assembly}.xml`;
   try {
-    const result = await fetch(url, { headers: { "User-Agent": "PrahaVoli/1.0 (ČSÚ public election data)" } });
+    // Fetch headers must be ByteString-safe; keep this value ASCII-only.
+    const result = await fetch(url, { headers: { "User-Agent": "PrahaVoli/1.0 (public election data)" } });
     if (!result.ok) return response.status(result.status).send("Oficiální výsledky zatím nejsou dostupné.");
     response.setHeader("Content-Type", "application/xml; charset=utf-8");
     response.setHeader("Cache-Control", "no-store, max-age=0");
