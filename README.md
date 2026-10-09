@@ -1,6 +1,6 @@
 # Praha volí
 
-Mobilní dashboard průběžných komunálních výsledků pro Prahu 8 a Zastupitelstvo hl. m. Prahy. Data se kontrolují každých 15 sekund; samotné otevřené XML ČSÚ má dle dokumentace cache přibližně 60 sekund.
+Mobilní dashboard komunálních výsledků pro Prahu 8 a Zastupitelstvo hl. m. Prahy. Průběžné výsledky 2026 kontroluje každých 15 sekund; samotné otevřené XML ČSÚ má dle dokumentace cache přibližně 60 sekund. Konečné výsledky 2022 se načtou po přepnutí na archivní záložku.
 
 ## Spuštění
 
@@ -23,6 +23,6 @@ Každý push do hlavní větve následně vytvoří nové nasazení.
 
 ## Zdroj a výpočet výsledků
 
-Zdroj: [ČSÚ — otevřená data komunálních voleb 2026](https://volby.gov.cz/opendata/kv2026/kv2026_opendata.htm). Aplikace čte oficiální XML jednotlivých zastupitelstev podle kódů z registru ČSÚ: Praha 8 `500208`, Praha `554782`.
+Zdroje: [ČSÚ — otevřená data komunálních voleb 2026](https://volby.gov.cz/opendata/kv2026/kv2026_opendata.htm) a [ČSÚ — otevřená data komunálních voleb 2022](https://volby.gov.cz/opendata/kv2022/kv2022_opendata.htm). Aplikace čte oficiální XML jednotlivých zastupitelstev podle kódů ČSÚ: Praha 8 `500208`, Praha `554782`. Pro rok 2022 používá endpoint s parametrem data voleb `20220923`.
 
 Počty sečtených okrsků, platné hlasy, podíly a přidělené mandáty se zobrazují podle XML ČSÚ. Před oficiálním přidělením mandátů aplikace nevykresluje vlastní odhad. Při nedostupnosti zdroje zůstávají hodnoty prázdné a zobrazí se informace o chybě.

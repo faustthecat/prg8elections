@@ -18,14 +18,19 @@
           <span class="brand-mark"><span></span><span></span><span></span></span>
           <span>PRAHA<span class="brand-light">VOLÍ</span></span>
         </a>
-        <div class="live-state"><i></i><span>ŽIVÉ VÝSLEDKY</span></div>
+        <div class="live-state" id="status-indicator"><i></i><span id="status-label">ŽIVÉ VÝSLEDKY</span></div>
       </header>
 
       <section class="intro" id="top">
-        <div class="eyebrow"><span>KOMUNÁLNÍ VOLBY</span><b>2026</b></div>
+        <div class="eyebrow"><span>KOMUNÁLNÍ VOLBY</span><b id="hero-year">2026</b></div>
         <h1>Rozhoduje<br /><em>každý hlas.</em></h1>
-        <p>Průběžné sčítání pro Prahu 8 a pražský magistrát.</p>
+        <p id="hero-copy">Průběžné sčítání pro Prahu 8 a pražský magistrát.</p>
       </section>
+
+      <nav class="year-tabs" aria-label="Vyberte rok voleb">
+        <button class="year-tab active" data-year="2026"><strong>2026</strong><span>AKTUÁLNÍ SČÍTÁNÍ</span></button>
+        <button class="year-tab" data-year="2022"><strong>2022</strong><span>POSLEDNÍ VOLBY</span></button>
+      </nav>
 
       <nav class="tabs" aria-label="Vyberte zastupitelstvo">
         <button class="tab active" data-district="praha8"><span>01</span> Praha 8</button>
@@ -34,7 +39,7 @@
 
       <section class="overview" aria-live="polite">
         <div class="overview-heading">
-          <div><span class="section-label">AKTUÁLNÍ STAV</span><h2 id="district-name">Praha 8</h2></div>
+          <div><span class="section-label" id="result-mode">PRŮBĚŽNÝ STAV</span><h2 id="district-name">Praha 8</h2></div>
           <div class="updated"><span>POSLEDNÍ KONTROLA</span><b id="updated-at">Čekám na data</b></div>
         </div>
         <div class="stats-grid">
@@ -60,17 +65,17 @@
 
       <section class="results-section">
         <div class="section-heading">
-          <div><span class="section-label">PRŮBĚŽNÉ POŘADÍ</span><h2>Jak si vedou kandidátky</h2></div>
+          <div><span class="section-label" id="ranking-mode">PRŮBĚŽNÉ POŘADÍ</span><h2>Jak si vedly kandidátky</h2></div>
           <div class="sort-label">PODLE PODÍLU HLASŮ <span>↓</span></div>
         </div>
         <div class="party-head"><span>KANDIDÁTNÍ LISTINA</span><span>HLASY / PODÍL</span><span>MANDÁTY</span></div>
         <div class="party-list" id="party-list"><div class="empty-state"><div class="empty-symbol">✳</div><b>Čekáme na první sečtené okrsky</b><span>Výsledky se načítají přímo z dat ČSÚ.</span></div></div>
-        <div class="results-foot"><span class="foot-mark">i</span><p>Mandáty zobrazujeme, jakmile je ČSÚ oficiálně přidělí. Během sčítání mohou být výsledky neúplné.</p></div>
+        <div class="results-foot"><span class="foot-mark">i</span><p id="results-foot-copy">Mandáty zobrazujeme, jakmile je ČSÚ oficiálně přidělí. Během sčítání mohou být výsledky neúplné.</p></div>
       </section>
 
       <footer>
         <div><span class="footer-brand">PRAHA<span>VOLÍ</span></span><span>Data poskytuje Český statistický úřad.</span></div>
-        <a href="https://volby.gov.cz/opendata/kv2026/kv2026_opendata.htm" target="_blank" rel="noreferrer">OFICIÁLNÍ DATA ČSÚ <span>↗</span></a>
+        <a id="official-source" href="https://volby.gov.cz/opendata/kv2026/kv2026_opendata.htm" target="_blank" rel="noreferrer">OFICIÁLNÍ DATA ČSÚ <span>↗</span></a>
       </footer>
     </main>
     <script src="/app.js" defer></script>

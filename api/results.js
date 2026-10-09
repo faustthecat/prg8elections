@@ -1,9 +1,13 @@
 const allowedAssemblies = new Set(["500208", "554782"]);
+const allowedYears = new Set(["2022", "2026"]);
 
 module.exports = async (request, response) => {
   const assembly = String(request.query.assembly || "");
-  if (!allowedAssemblies.has(assembly)) return response.status(400).send("Neznámé zastupitelstvo.");
-  const url = `https://volby.gov.cz/appdata/kv2026/20261009/odata/zastup/vysledky_obec_${assembly}.xml`;
+  const year = String(request.query.year || "2026");
+  if (!allowedAssemblies.has(assembly) || !allowedYears.has(year)) return response.status(400).send("Neznámé zastupitelstvo nebo rok voleb.");
+  const url = year === "2022"
+    ? `https://volby.gov.cz/pls/kv2022/vysledky_obec?cislo_obce=${assembly}&datumvoleb=20220923`
+    : `https://volby.gov.cz/appdata/kv2026/20261009/odata/zastup/vysledky_obec_${assembly}.xml`;
   try {
     // Fetch headers must be ByteString-safe; keep this value ASCII-only.
     const result = await fetch(url, { headers: { "User-Agent": "PrahaVoli/1.0 (public election data)" } });

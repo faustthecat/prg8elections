@@ -4,7 +4,8 @@ const ASSEMBLIES = {
 };
 const colors = ["#557f6d", "#c78658", "#7883ad", "#b76c72", "#aa9b4e", "#598f9a", "#9674a7", "#789458"];
 let selected = "praha8";
-let refreshing = false;
+let selectedYear = "2026";
+let latestRequest = 0;
 
 const el = (id) => document.getElementById(id);
 const number = (value) => {
@@ -43,7 +44,7 @@ function parseResults(xmlText, target) {
   const totalPrecincts = firstNumber(assembly, ["OKRSKY_CELKEM", "OKRSKYCELK", "OKRSKY_CELK"]);
   const participation = firstNumber(assembly, ["UCAST_PROC", "UCASTPROC"]);
   const validVotes = firstNumber(assembly, ["PLATNE_HLASY", "PLATNEHLASY"]);
-  const seatsConfirmed = assembly.getAttribute("JE_SPOCTENO") === "1";
+  const seatsConfirmed = ["1", "true"].includes((assembly.getAttribute("JE_SPOCTENO") || "").toLowerCase());
   const processedPct = firstNumber(assembly, ["OKRSKY_ZPRAC_PROC", "OKRSKYZPRACPROC"])
     ?? (precincts !== null && totalPrecincts ? (100 * precincts / totalPrecincts) : null);
 
@@ -63,7 +64,13 @@ function setNote(message, state = "") { const note = el("data-note"); note.class
 
 function render(data) {
   const config = ASSEMBLIES[selected];
+  const historical = selectedYear === "2022";
   el("district-name").textContent = config.name;
+  el("result-mode").textContent = historical ? "KONEČNÝ STAV" : "PRŮBĚŽNÝ STAV";
+  el("ranking-mode").textContent = historical ? "KONEČNÉ POŘADÍ" : "PRŮBĚŽNÉ POŘADÍ";
+  el("results-foot-copy").textContent = historical
+    ? "Konečné počty hlasů a mandátů podle oficiálních výsledků ČSÚ za volby v roce 2022."
+    : "Mandáty zobrazujeme, jakmile je ČSÚ oficiálně přidělí. Během sčítání mohou být výsledky neúplné.";
   el("precinct-pct").textContent = data.processedPct === null ? "—" : data.processedPct.toLocaleString("cs-CZ", { maximumFractionDigits: 1 });
   el("progress-fill").style.width = `${Math.min(100, Math.max(0, data.processedPct ?? 0))}%`;
   el("precinct-count").textContent = data.precincts === null ? "Čeká se na první data" : `${fmt(data.precincts)} / ${fmt(data.totalPrecincts ?? "—")}`;
@@ -74,7 +81,7 @@ function render(data) {
   el("seats-note").textContent = data.seatsConfirmed ? "Potvrzené mandáty ČSÚ" : "ČSÚ zatím mandáty nepřidělil";
   const list = el("party-list");
   if (!data.parties.length || !data.precincts) {
-    list.innerHTML = `<div class="empty-state"><div class="empty-symbol">✳</div><b>${data.parties.length ? "Sčítání zatím nezačalo" : "Čekáme na první sečtené okrsky"}</b><span>Výsledky se načítají přímo z dat ČSÚ.</span></div>`;
+    list.innerHTML = `<div class="empty-state"><div class="empty-symbol">✳</div><b>${selectedYear === "2022" ? "Historická data nejsou dostupná" : data.parties.length ? "Sčítání zatím nezačalo" : "Čekáme na první sečtené okrsky"}</b><span>Výsledky se načítají přímo z dat ČSÚ.</span></div>`;
     return;
   }
   list.innerHTML = data.parties.map((party, index) => `<article class="party-row" style="--party-color:${colors[index % colors.length]}">
@@ -86,21 +93,36 @@ function render(data) {
 function escapeHtml(value) { return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char])); }
 
 async function refresh() {
-  if (refreshing) return;
-  refreshing = true;
+  const requestId = ++latestRequest;
   const config = ASSEMBLIES[selected];
+  const year = selectedYear;
   try {
-    const response = await fetch(`/api/results?assembly=${config.code}`, { cache: "no-store" });
+    const response = await fetch(`/api/results?assembly=${config.code}&year=${year}`, { cache: "no-store" });
     const body = await response.text();
     if (!response.ok) throw new Error(body || "Zdroj výsledků není dostupný.");
+    if (requestId !== latestRequest) return;
     const data = parseResults(body, config);
     render(data);
-    el("updated-at").textContent = new Date().toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-    setNote("Kontrola probíhá každých 15 sekund · oficiální data ČSÚ se mohou aktualizovat pomaleji", "ok");
+    el("updated-at").textContent = `${year === "2022" ? "Načteno" : "Kontrola"} ${new Date().toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit", second: "2-digit"})}`;
+    setNote(year === "2022"
+      ? "Konečné výsledky komunálních voleb 2022 · ověřovací data ČSÚ"
+      : "Kontrola probíhá každých 15 sekund · oficiální data ČSÚ se mohou aktualizovat pomaleji", "ok");
   } catch (error) {
-    setNote(`${error.message} Další pokus za 15 sekund.`, "error");
+    if (requestId !== latestRequest) return;
+    setNote(year === "2022" ? `${error.message} Zkuste data načíst znovu.` : `${error.message} Další pokus za 15 sekund.`, "error");
     el("updated-at").textContent = "Zdroj nedostupný";
-  } finally { refreshing = false; }
+  }
+}
+
+function resetForLoading() {
+  el("precinct-pct").textContent = "—";
+  el("progress-fill").style.width = "0%";
+  el("precinct-count").textContent = "Načítám…";
+  el("valid-votes").textContent = "—";
+  el("turnout").textContent = "Načítám…";
+  el("seats-filled").textContent = "—";
+  el("party-list").innerHTML = `<div class="empty-state"><div class="empty-symbol">✳</div><b>Načítám výsledky</b><span>Ověřuji aktuální stav u ČSÚ.</span></div>`;
+  el("updated-at").textContent = "Načítám…";
 }
 
 document.querySelectorAll(".tab").forEach((button) => button.addEventListener("click", () => {
@@ -108,9 +130,28 @@ document.querySelectorAll(".tab").forEach((button) => button.addEventListener("c
   document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab === button));
   el("district-name").textContent = ASSEMBLIES[selected].name;
   el("seat-total").textContent = ASSEMBLIES[selected].seats;
-  el("updated-at").textContent = "Načítám…";
-  el("party-list").innerHTML = `<div class="empty-state"><div class="empty-symbol">✳</div><b>Načítám výsledky</b><span>Ověřuji aktuální stav u ČSÚ.</span></div>`;
+  resetForLoading();
+  refresh();
+}));
+
+document.querySelectorAll(".year-tab").forEach((button) => button.addEventListener("click", () => {
+  selectedYear = button.dataset.year;
+  document.querySelectorAll(".year-tab").forEach((tab) => tab.classList.toggle("active", tab === button));
+  const historical = selectedYear === "2022";
+  el("hero-year").textContent = selectedYear;
+  el("hero-copy").textContent = historical
+    ? "Konečné výsledky posledních komunálních voleb pro Prahu 8 a pražský magistrát."
+    : "Průběžné sčítání pro Prahu 8 a pražský magistrát.";
+  el("status-label").textContent = historical ? "ARCHIVNÍ DATA 2022" : "ŽIVÉ VÝSLEDKY";
+  el("status-indicator").classList.toggle("archived", historical);
+  el("official-source").href = historical
+    ? "https://volby.gov.cz/opendata/kv2022/kv2022_opendata.htm"
+    : "https://volby.gov.cz/opendata/kv2026/kv2026_opendata.htm";
+  el("result-mode").textContent = historical ? "KONEČNÝ STAV" : "PRŮBĚŽNÝ STAV";
+  el("ranking-mode").textContent = historical ? "KONEČNÉ POŘADÍ" : "PRŮBĚŽNÉ POŘADÍ";
+  el("seats-note").textContent = historical ? "Oficiálně přidělené mandáty" : "Potvrzené výsledky ČSÚ";
+  resetForLoading();
   refresh();
 }));
 refresh();
-setInterval(refresh, 15_000);
+setInterval(() => { if (selectedYear === "2026") refresh(); }, 15_000);
