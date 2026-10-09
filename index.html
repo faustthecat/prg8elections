@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f3f4f1" />
+    <meta name="description" content="Průběžné výsledky komunálních voleb 2026 pro Prahu 8 a Zastupitelstvo hlavního města Prahy." />
+    <title>Praha volí — živé výsledky</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <a class="brand" href="#top" aria-label="Praha volí – úvod">
+          <span class="brand-mark"><span></span><span></span><span></span></span>
+          <span>PRAHA<span class="brand-light">VOLÍ</span></span>
+        </a>
+        <div class="live-state"><i></i><span>ŽIVÉ VÝSLEDKY</span></div>
+      </header>
+
+      <section class="intro" id="top">
+        <div class="eyebrow"><span>KOMUNÁLNÍ VOLBY</span><b>2026</b></div>
+        <h1>Rozhoduje<br /><em>každý hlas.</em></h1>
+        <p>Průběžné sčítání pro Prahu 8 a pražský magistrát.</p>
+      </section>
+
+      <nav class="tabs" aria-label="Vyberte zastupitelstvo">
+        <button class="tab active" data-district="praha8"><span>01</span> Praha 8</button>
+        <button class="tab" data-district="magistrat"><span>02</span> Magistrát</button>
+      </nav>
+
+      <section class="overview" aria-live="polite">
+        <div class="overview-heading">
+          <div><span class="section-label">AKTUÁLNÍ STAV</span><h2 id="district-name">Praha 8</h2></div>
+          <div class="updated"><span>POSLEDNÍ KONTROLA</span><b id="updated-at">Čekám na data</b></div>
+        </div>
+        <div class="stats-grid">
+          <article class="stat-card primary-stat">
+            <div class="stat-top"><span>SEČTENO OKRSKŮ</span><span class="stat-icon">↗</span></div>
+            <div class="stat-value"><strong id="precinct-pct">—</strong><span>%</span></div>
+            <div class="progress"><i id="progress-fill"></i></div>
+            <div class="stat-foot"><span id="precinct-count">Čeká se na první data</span><span>okrsky</span></div>
+          </article>
+          <article class="stat-card">
+            <div class="stat-top"><span>PLATNÉ HLASOVACÍ LÍSTKY</span><span class="stat-icon">◉</span></div>
+            <div class="stat-value"><strong id="valid-votes">—</strong></div>
+            <div class="stat-foot"><span id="turnout">Účast se dopočítává</span><span>hlasů</span></div>
+          </article>
+          <article class="stat-card seats-card">
+            <div class="stat-top"><span>ROZDĚLENÉ MANDÁTY</span><span class="stat-icon">▥</span></div>
+            <div class="stat-value"><strong id="seats-filled">—</strong><span class="seat-total">/ <b id="seat-total">45</b></span></div>
+            <div class="stat-foot"><span id="seats-note">Potvrzené výsledky ČSÚ</span><span>mandátů</span></div>
+          </article>
+        </div>
+        <div class="data-note" id="data-note"><span class="note-dot"></span><span>Navazuji spojení s oficiálním zdrojem ČSÚ…</span></div>
+      </section>
+
+      <section class="results-section">
+        <div class="section-heading">
+          <div><span class="section-label">PRŮBĚŽNÉ POŘADÍ</span><h2>Jak si vedou kandidátky</h2></div>
+          <div class="sort-label">PODLE PODÍLU HLASŮ <span>↓</span></div>
+        </div>
+        <div class="party-head"><span>KANDIDÁTNÍ LISTINA</span><span>HLASY / PODÍL</span><span>MANDÁTY</span></div>
+        <div class="party-list" id="party-list"><div class="empty-state"><div class="empty-symbol">✳</div><b>Čekáme na první sečtené okrsky</b><span>Výsledky se načítají přímo z dat ČSÚ.</span></div></div>
+        <div class="results-foot"><span class="foot-mark">i</span><p>Mandáty zobrazujeme, jakmile je ČSÚ oficiálně přidělí. Během sčítání mohou být výsledky neúplné.</p></div>
+      </section>
+
+      <footer>
+        <div><span class="footer-brand">PRAHA<span>VOLÍ</span></span><span>Data poskytuje Český statistický úřad.</span></div>
+        <a href="https://volby.gov.cz/opendata/kv2026/kv2026_opendata.htm" target="_blank" rel="noreferrer">OFICIÁLNÍ DATA ČSÚ <span>↗</span></a>
+      </footer>
+    </main>
+    <script src="/app.js" defer></script>
+  </body>
+</html>
