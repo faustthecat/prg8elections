@@ -13,8 +13,16 @@ const number = (value) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 const textOf = (node, name) => {
-  const found = [node, ...node.getElementsByTagName("*")].find((child) => child.tagName.toUpperCase() === name.toUpperCase());
-  return found?.textContent?.trim() ?? "";
+  const key = name.toUpperCase();
+  const nodes = [node, ...node.getElementsByTagName("*")];
+  const ownAttribute = [...node.attributes].find((attribute) => attribute.name.toUpperCase() === key);
+  if (ownAttribute) return ownAttribute.value.trim();
+  for (const child of nodes.slice(1)) {
+    if (child.tagName.toUpperCase() === key) return child.textContent.trim();
+    const attribute = [...child.attributes].find((candidate) => candidate.name.toUpperCase() === key);
+    if (attribute) return attribute.value.trim();
+  }
+  return "";
 };
 const descendants = (node, name) => [...node.getElementsByTagName("*")].filter((child) => child.tagName.toUpperCase() === name.toUpperCase());
 const firstNumber = (node, names) => {
@@ -30,14 +38,12 @@ function parseResults(xmlText, target) {
   if (doc.querySelector("parsererror")) throw new Error("ČSÚ vrátilo nečitelná data.");
   const all = [...doc.getElementsByTagName("*")];
   const root = doc.documentElement;
-  const assembly = all.find((node) => {
-    const code = textOf(node, "KODZASTUP");
-    return code === target.code;
-  }) || root;
+  const assembly = all.find((node) => node.tagName.toUpperCase() === "OBEC" && node.getAttribute("KODZASTUP") === target.code) || root;
   const precincts = firstNumber(assembly, ["OKRSKY_ZPRAC", "OKRSKYZPRAC", "OKRSKY_ZPRACOVANO"]);
   const totalPrecincts = firstNumber(assembly, ["OKRSKY_CELKEM", "OKRSKYCELK", "OKRSKY_CELK"]);
   const participation = firstNumber(assembly, ["UCAST_PROC", "UCASTPROC"]);
   const validVotes = firstNumber(assembly, ["PLATNE_HLASY", "PLATNEHLASY"]);
+  const seatsConfirmed = assembly.getAttribute("JE_SPOCTENO") === "1";
   const processedPct = firstNumber(assembly, ["OKRSKY_ZPRAC_PROC", "OKRSKYZPRACPROC"])
     ?? (precincts !== null && totalPrecincts ? (100 * precincts / totalPrecincts) : null);
 
@@ -46,10 +52,10 @@ function parseResults(xmlText, target) {
     name: textOf(node, "NAZEV_STRANY") || textOf(node, "NAZEVPLNY") || textOf(node, "NAZEV"),
     votes: firstNumber(node, ["HLASY", "POCET_HLASU"]),
     pct: firstNumber(node, ["HLASY_PROC", "HLASYPROC"]),
-    seats: firstNumber(node, ["ZASTUPITELE_POCET", "ZASTUPITELEPOCET", "POCET_ZASTUPITELU"]),
+    seats: seatsConfirmed ? firstNumber(node, ["ZASTUPITELE_POCET", "ZASTUPITELEPOCET", "POCET_ZASTUPITELU"]) : null,
   })).filter((party) => party.name).sort((a, b) => (b.votes ?? 0) - (a.votes ?? 0));
   const assignedSeats = parties.reduce((sum, party) => sum + (party.seats ?? 0), 0);
-  return { precincts, totalPrecincts, processedPct, participation, validVotes, parties, assignedSeats, generated: textOf(assembly, "CAS_GENEROVANI") };
+  return { precincts, totalPrecincts, processedPct, participation, validVotes, parties, assignedSeats, seatsConfirmed, generated: textOf(assembly, "DATUM_CAS_GENEROVANI") };
 }
 
 function fmt(value) { return value === null || value === undefined ? "—" : new Intl.NumberFormat("cs-CZ").format(value); }
@@ -63,12 +69,12 @@ function render(data) {
   el("precinct-count").textContent = data.precincts === null ? "Čeká se na první data" : `${fmt(data.precincts)} / ${fmt(data.totalPrecincts ?? "—")}`;
   el("valid-votes").textContent = fmt(data.validVotes);
   el("turnout").textContent = data.participation === null ? "Účast se dopočítává" : `Volební účast ${data.participation.toLocaleString("cs-CZ", { maximumFractionDigits: 1 })} %`;
-  el("seats-filled").textContent = data.parties.length ? fmt(data.assignedSeats) : "—";
+  el("seats-filled").textContent = data.seatsConfirmed ? fmt(data.assignedSeats) : "—";
   el("seat-total").textContent = config.seats;
-  el("seats-note").textContent = data.assignedSeats ? "Potvrzené mandáty ČSÚ" : "ČSÚ zatím mandáty nepřidělil";
+  el("seats-note").textContent = data.seatsConfirmed ? "Potvrzené mandáty ČSÚ" : "ČSÚ zatím mandáty nepřidělil";
   const list = el("party-list");
-  if (!data.parties.length) {
-    list.innerHTML = `<div class="empty-state"><div class="empty-symbol">✳</div><b>Čekáme na první sečtené okrsky</b><span>Výsledky se načítají přímo z dat ČSÚ.</span></div>`;
+  if (!data.parties.length || !data.precincts) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-symbol">✳</div><b>${data.parties.length ? "Sčítání zatím nezačalo" : "Čekáme na první sečtené okrsky"}</b><span>Výsledky se načítají přímo z dat ČSÚ.</span></div>`;
     return;
   }
   list.innerHTML = data.parties.map((party, index) => `<article class="party-row" style="--party-color:${colors[index % colors.length]}">
